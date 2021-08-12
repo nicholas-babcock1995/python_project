@@ -27,6 +27,8 @@ SCORE = 0
  
 
 score_font = pygame.font.SysFont("Helvetica", 30) 
+end_game = pygame.font.SysFont("Helvetica", 50).render("You LOSE LOSER",True, RED)
+win_game = pygame.font.SysFont("Helvetica", 50).render("YOU WIN WINNER", True, GREEN)
 #Create a white screen 
 DISPLAYSURF = pygame.display.set_mode((800,1000))
 DISPLAYSURF.fill(WHITE)
@@ -63,7 +65,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load('resize-16287173771310531498croppedimage1.png')
-        self.surf = pygame.Surface((40, 250))
+        self.surf = pygame.Surface((25, 100))
         self.rect = self.surf.get_rect(center = (160, 900))
     def move(self):
         pressed_keys = pygame.key.get_pressed()
@@ -139,10 +141,15 @@ while True:
     score = score_font.render("score: " + str(SCORE), True, RED)
     DISPLAYSURF.blit(score, (25,25))
 
+    flag = True
 
     for bullet in bullets:
         if bullet.x < 800 and bullet.x > 0:
             bullet.x += bullet.vel  
+            if bullet.x - enemy_one.rect.left <= 10 and bullet.y - enemy_one.rect.top <= 50 and flag == True:
+                SCORE += 1
+                bullets.pop(bullets.index(bullet)) 
+                flag = False
         else:
             bullets.pop(bullets.index(bullet)) 
        
@@ -152,5 +159,36 @@ while True:
         sprite.move()
         for bullet in bullets:
             bullet.draw(DISPLAYSURF)     
+    
+    # we need to figure out a way to check in enemys self rectangles are touching eachother, 
+    # this will also have to trigger a game end, (if something hits your sprite you lose)
+    #pygame sprites have a useful method spritecollideany https://www.pygame.org/docs/ref/sprite.html
+    #basically it can return a boolean if the sprites its fed touch
+    if pygame.sprite.spritecollideany(player_one,fishes):
+        #we should give this method some time to calculate as it takes more run time then the other collide methods
+        time.sleep(1.0)
+        #so they collided, we fill the screen and present a message
+        DISPLAYSURF.fill(BLACK)
+        DISPLAYSURF.blit(end_game, (50,300))
+        
+        pygame.display.update()
+
+        #next we need to destroy the other game elements and end the game
+        for sprite in all_sprites:
+            sprite.kill()
+        time.sleep(2.0)
+        pygame.quit()
+        sys.exit()
+    #lets find a way for them to win?
+    if SCORE >= 30:
+        time.sleep(1.0)
+        DISPLAYSURF.fill(BLACK)
+        DISPLAYSURF.blit(win_game, (50,300))
+        for sprite in all_sprites:
+            sprite.kill()
+        time.sleep(2.0)
+        pygame.quit()
+        sys.exit()
+    #this is the final update to the display, well also incriment the Frames
     pygame.display.update()
     FramePerSec.tick(FPS)
